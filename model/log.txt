@@ -1,0 +1,9 @@
+
+(nlp_ner) D:\NP\Kuliah\Softeng\AOL\model>SET train_path=./train.spacy 
+
+(nlp_ner) D:\NP\Kuliah\Softeng\AOL\model>SET dev_path=./dev.spacy 
+
+(nlp_ner) D:\NP\Kuliah\Softeng\AOL\model>set NVCC_PREPEND_FLAGS=-allow-unsupported-compiler 
+
+(nlp_ner) D:\NP\Kuliah\Softeng\AOL\model>python -m spacy train config.cfg --output ./output --paths.train ./train.spacy --paths.dev ./dev.spacy --gpu-id 0 
+Terminate batch job (Y/N)? Terminate batch job (Y/N)? 

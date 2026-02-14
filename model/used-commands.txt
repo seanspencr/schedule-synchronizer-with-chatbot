@@ -1,0 +1,2 @@
+python -m spacy init config config.cfg --lang en --pipeline ner --optimize accuracy
+./run_training.bat
