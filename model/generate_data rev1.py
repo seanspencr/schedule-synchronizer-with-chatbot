@@ -89,7 +89,7 @@ week_month = [
 ]
 
 recurrence_expr = [
-    "every", "each", "evry", "per", "repeating", "recurring", "daily", "weekly", "monthly", "on", "all", "once a"
+    "every", "each", "evry", "per", "once a"
 ]
 
 day_name = [
@@ -135,22 +135,6 @@ am_pm = [
 prepositions_start = ["at", "starting at", "beginning at", "around", "from", "circa", "approx"]
 prepositions_end = ["to", "until", "ending at", "till", "thru", "-"]
 
-
-def get_random_time_string():
-    """Generates a time string and its type (numeric/text/vague)."""
-    type_choice = random.choice(["numeric", "text", "vague"])
-    
-    if type_choice == "vague":
-        return random.choice(times_vague)
-    elif type_choice == "text":
-        t = random.choice(times_text)
-        suffix = f" {random.choice(am_pm)}" if random.random() > 0.5 else ""
-        return f"{t}{suffix}".strip()
-    else:
-        t = random.choice(times_numeric)
-        suffix = f" {random.choice(am_pm)}" if random.random() > 0.3 else ""
-        return f"{t}{suffix}".strip()
-
 new_label = [
     "EVENT",
     "DATE",
@@ -158,6 +142,16 @@ new_label = [
     "END_TIME",
     "RECURRENCE"
 ]
+
+def get_random_time_string():
+    """Generates a time string and its type (numeric/text/vague)."""
+    type_choice = random.choice(["numeric", "text"])
+    
+    # if type_choice == "vague":
+    # return random.choice(times_vague)
+    t = random.choice(times_numeric)
+    suffix = f" {random.choice(am_pm)}" if random.random() > 0.3 else ""
+    return f"{t}{suffix}".strip()
 
 def make_typo(text, chance=0.2):
     """Randomly introduces typos into a string."""
@@ -180,6 +174,142 @@ def make_typo(text, chance=0.2):
             text_list[idx], text_list[idx+1] = text_list[idx+1], text_list[idx]
             
     return "".join(text_list)
+
+
+
+def get_random_times() -> tuple[str, str]:
+    t1 = get_random_time_string()
+    t2 = get_random_time_string()
+    while t1 == t2: t2 = get_random_time_string()
+    return (t1, t2)
+
+def get_random_time_block():
+    """
+    Returns a list of tuples: [(text, label), (text, label)...]
+    This handles the complex internal structure of time ranges without fixing the global order.
+    """
+    type_choice = random.choice(["single", "range", "range_hyphen"])
+    
+    components = []
+    
+    t1, t2 = get_random_times()
+
+    if type_choice == "single":
+        # Example: "at 5pm" -> "at" (None), "5pm" (START_TIME)
+        prep = random.choice(prepositions_start)
+        components.append((prep, None))
+        components.append((t1, "START_TIME"))
+        
+    elif type_choice == "range":
+        # Example: "from 5pm to 7pm"
+        if random.random() > 0.5 :
+            components.append(("from", None))
+            components.append((t1, "START_TIME"))
+            components.append(("to", None))
+            components.append((t2, "END_TIME"))
+        else:
+            components.append(("to", None))
+            components.append((t2, "END_TIME"))
+            components.append(("from", None))
+            components.append((t1, "START_TIME"))
+
+    elif type_choice == "range_hyphen":
+        # Example: "5pm - 7pm"
+        # Note: We treat the hyphen as a non-entity separator
+        components.append((t1, "START_TIME"))
+        components.append(("-", None))
+        components.append((t2, "END_TIME"))
+        
+    return components
+
+def get_random_date_block():
+    """
+    Returns a list of tuples: [(text, label), (text, label)...]
+    This handles the complex internal structure of time ranges without fixing the global order.
+    """
+    type_choice = random.choice(["numeric", "text"])
+    
+    components = []
+
+    if type_choice == "numeric":
+        date =  str(random.randint(1,31))
+        month = random.choice(month_name)
+        date_month = [date, month]
+        random.shuffle(date_month)
+        components.append((" ".join(date_month), "DATE")) #result : ("January 31", DATE)
+        
+        
+    elif type_choice == "text":
+        day = random.choice(day_name)
+        preposition = random.choice(this_next_upcoming)
+        recurrence = random.choice(recurrence_expr)
+        if random.random() > 0.5:
+            if random.random() > 0.5:
+                # day only
+                components.append((day, "DATE"))
+            else:
+                # next day
+                components.append((f"{preposition} {day}", "DATE"))
+        else :
+            # recurring day
+            components.append((recurrence, "RECURRENCE"))
+            components.append((day, "DATE"))
+        
+    return components
+
+def get_sentence_data():
+    """
+    Builds a sentence by shuffling loose components.
+    """
+    intent_text = random.choice(intents)
+    activity_text = random.choice(activities)
+    
+    # Define the "Blocks" of the sentence
+    # Each block is a list of (text, label) tuples
+    
+    # Block A: Intent (No label)
+    block_intent = [(intent_text, None)]
+    
+    # Block B: Activity (Label: EVENT)
+    block_activity = [(activity_text, "EVENT")]
+    
+    # Block C: Date (Label: DATE)
+    # We add a preposition sometimes, e.g. "on Monday" vs "Monday"
+    block_date = get_random_date_block()
+
+    # Block D: Time (Complex Labels)
+    block_time = get_random_time_block()
+
+    # 2. Shuffle the order of Activity, Date, and Time
+    # Intent usually comes first, but strict shuffling helps robustness
+    # Let's keep Intent first 80% of the time, but shuffle the rest
+    
+    date_time_blocks = [block_date, block_time]
+    random.shuffle(date_time_blocks)
+    
+    # Final ordering
+    final_blocks = [block_intent] +  [block_activity] + date_time_blocks
+
+    # 3. Construct the String and Entities
+    full_text = ""
+    entities = []
+    for block in final_blocks:
+        for text, label in block:
+            # Add space if it's not the start
+            if full_text:
+                full_text += " "
+            
+            start_idx = len(full_text)
+            full_text += text
+            end_idx = len(full_text)
+            
+            if label:
+                entities.append((start_idx, end_idx, label))
+
+    entitiy_dict = {"entities" : []}
+    for ent in entities:
+        entitiy_dict["entities"].append(list(ent))
+    return [full_text, entitiy_dict]
 
 
 # def generate_variations(n=10):
@@ -257,188 +387,10 @@ def make_typo(text, chance=0.2):
 def generate_variations(n=10):
     training_data = []
     
-    numbers = ["2", "3", "4", "two", "three"]
-    alternates = ["other", "second"]
-
-    for _ in range(n):
-        entities = []
-        parts = [] # We will build the sentence part by part
-        
-        # --- PART A: INTENT & ACTIVITY ---
-        intent = random.choice(intents)
-        activity = random.choice(activities)
-        
-        # Add Intent (no label usually, but takes up space)
-        parts.append(intent)
-        
-        # Add Activity (Label: EVENT)
-        parts.append(activity)
-        # We calculate indices later, just store the label for now
-        # Format: (text_content, label)
-        # We store parts as simple strings, we will handle entities at the end
-        
-        
-        # --- PART B: DATE / RECURRENCE ---
-        pattern_type = random.randint(1, 5)
-        date_label = "DATE"
-        
-        if pattern_type == 1: 
-            date_str = f"{random.choice(recurrence_expr)} {random.choice(['week', 'month'])} on {random.choice(day_name)}"
-            date_label = "RECURRENCE"
-        elif pattern_type == 2:
-            date_str = f"{random.choice(this_next_upcoming)} {random.choice(day_name)}".strip()
-        elif pattern_type == 3:
-            date_str = f"{random.choice(recurrence_expr)} {random.choice(day_name)}"
-            date_label = "RECURRENCE"
-        elif pattern_type == 4:
-            date_str = f"{random.choice(month_name)} {random.randint(1, 28)}"
-        else:
-            num_choice = random.choice([random.choice(numbers), random.choice(alternates)])
-            unit = random.choice(['week', 'month', 'day'])
-            plural = "s" if unit != "day" and num_choice not in alternates else ""
-            date_str = f"every {num_choice} {unit}{plural}"
-            date_label = "RECURRENCE"
-            
-        parts.append(date_str)
-
-        # --- PART C: CLOCK TIME (Start/End) ---
-        # 30% chance of no specific time, 40% single start time, 30% range
-        time_mode = random.choices(["none", "start_only", "range"], weights=[0.3, 0.4, 0.3])[0]
-        
-        # Lists to hold the text for the time part specifically
-        time_part_str = ""
-        time_entities_relative = [] # (start, end, label) relative to the time string
-
-        if time_mode == "start_only":
-            t_str = get_random_time_string()
-            preposition = random.choice(["at", "around", "in the"]) if t_str in times_vague else "at"
-            
-            # Construct: "at 5pm"
-            time_part_str = f"{preposition} {t_str}"
-            
-            # Calculate relative index
-            # The entity is just the time part, not the preposition
-            start_idx = len(preposition) + 1
-            end_idx = start_idx + len(t_str)
-            time_entities_relative.append((start_idx, end_idx, "START_TIME"))
-            
-        elif time_mode == "range":
-            t_start = get_random_time_string()
-            t_end = get_random_time_string()
-            
-            # Ensure end time is different
-            while t_end == t_start:
-                t_end = get_random_time_string()
-            
-            # Decide Pattern: 
-            # 1. Spoken Prepositions (from...to / at...until)
-            # 2. Between...and
-            # 3. Hyphens (9-5 / 9 - 5)
-            
-            range_type = random.choices(["preposition", "between", "hyphen"], weights=[0.5, 0.2, 0.3])[0]
-
-            if range_type == "preposition":
-                p_start = random.choice(prepositions_start)
-                p_end = random.choice(prepositions_end)
-                
-                time_part_str = f"{p_start} {t_start} {p_end} {t_end}"
-                
-                # Indices
-                s_idx = len(p_start) + 1 
-                e_idx = s_idx + len(t_start)
-                time_entities_relative.append((s_idx, e_idx, "START_TIME"))
-                
-                s_idx_2 = e_idx + 1 + len(p_end) + 1
-                e_idx_2 = s_idx_2 + len(t_end)
-                time_entities_relative.append((s_idx_2, e_idx_2, "END_TIME"))
-
-            elif range_type == "between":
-                time_part_str = f"between {t_start} and {t_end}"
-                
-                s_idx = 8 # len("between ")
-                e_idx = s_idx + len(t_start)
-                time_entities_relative.append((s_idx, e_idx, "START_TIME"))
-                
-                s_idx_2 = e_idx + 5 # + len(" and ")
-                e_idx_2 = s_idx_2 + len(t_end)
-                time_entities_relative.append((s_idx_2, e_idx_2, "END_TIME"))
-
-            else: # HYPHEN PATTERN
-                # Randomly decide if we use spaces around hyphen (" - " vs "-")
-                separator = " - " if random.random() > 0.5 else "-"
-                
-                time_part_str = f"{t_start}{separator}{t_end}"
-                
-                # Start Time is at the very beginning (index 0 relative to time_part_str)
-                s_idx = 0
-                e_idx = len(t_start)
-                time_entities_relative.append((s_idx, e_idx, "START_TIME"))
-                
-                # End Time starts after start_time + separator
-                s_idx_2 = e_idx + len(separator)
-                e_idx_2 = s_idx_2 + len(t_end)
-                time_entities_relative.append((s_idx_2, e_idx_2, "END_TIME"))
-
-        if time_part_str:
-            parts.append(time_part_str)
-
-        # --- 4. ASSEMBLE & CALCULATE GLOBAL INDICES ---
-        full_text = ""
-        final_entities = []
-        
-        # We assume the order: Intent -> Activity -> Date -> Time
-        # We iterate through the parts we created
-        
-        current_idx = 0
-        
-        # 1. Intent (No label)
-        full_text += intent
-        current_idx += len(intent)
-        
-        # Add space
-        full_text += " "
-        current_idx += 1
-        
-        # 2. Activity (Label: EVENT)
-        start_act = current_idx
-        full_text += activity
-        end_act = current_idx + len(activity)
-        final_entities.append([start_act, end_act, "EVENT"])
-        current_idx = end_act
-        
-        # Add space
-        full_text += " "
-        current_idx += 1
-        
-        # 3. Date (Label: DATE or RECURRENCE)
-        start_date = current_idx
-        full_text += date_str
-        end_date = current_idx + len(date_str)
-        final_entities.append([start_date, end_date, date_label])
-        current_idx = end_date
-        
-        # 4. Time (Optional)
-        if time_part_str:
-            full_text += " "
-            current_idx += 1
-            
-            # The relative indices in time_entities_relative need to be shifted by current_idx
-            for t_start, t_end, t_label in time_entities_relative:
-                final_entities.append([current_idx + t_start, current_idx + t_end, t_label])
-            
-            full_text += time_part_str
-            
-        # Lowercase text (optional, but good for normalization)
-        # Note: If you lowercase, ensure indices didn't change (usually fine in English)
-        # To be safe, we just return mixed case or ensure logic handles it.
-        # Here we return mixed case as generated.
-            
-        training_data.append([full_text, {'entities': final_entities}])
-
+    for i in range(n):
+        training_data.append(get_sentence_data())
+    
     return training_data
-
-for data in generate_variations():
-    print(data)
     
     
 def convert_to_spacy_binary(data, output_file):
@@ -482,6 +434,10 @@ def convert_to_spacy_binary(data, output_file):
         
         
 if __name__ == "__main__":
+
+    output_file_name = "train_rev1.spacy"
+    dev_output_file_name = "dev_rev1.spacy"
+
     # 1. Generate Data
     WHOLE_SIZE = 1000000
     TRAIN_SIZE = int(WHOLE_SIZE * 0.8)
@@ -491,15 +447,19 @@ if __name__ == "__main__":
     dev_data = generate_variations(DEV_SIZE) # Always good to have a validation set
     
     # 2. Export
-    convert_to_spacy_binary(train_data, "./train.spacy")
-    convert_to_spacy_binary(dev_data, "./dev.spacy")
+    convert_to_spacy_binary(train_data, f"./{output_file_name}")
+    convert_to_spacy_binary(dev_data, f"./{dev_output_file_name}")
     
     # 3. Validation
     # Let's load it back to make sure it works
     print("\n--- Validation Check ---")
-    doc_bin = DocBin().from_disk("./train.spacy")
+    doc_bin = DocBin().from_disk(f"./{output_file_name}")
     nlp = spacy.blank("en")
     docs = list(doc_bin.get_docs(nlp.vocab))
-    print(f"Successfully loaded {len(docs)} docs from ./train.spacy")
+    print(f"Successfully loaded {len(docs)} docs from ./{output_file_name}")
     print(f"Example: {docs[0].text}")
     print(f"Entities: {[(ent.text, ent.label_) for ent in docs[0].ents]}")
+
+# print("------------------------------------------------- original --------------------------")
+# for var  in generate_variations(10):
+#     print(var)
