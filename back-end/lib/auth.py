@@ -37,12 +37,13 @@ def get_current_user_from_cookie(request: Request) -> TokenData:
         )
     token_data = verify_token(token)
     username = token_data.get("sub")
+    id = token_data.get("id")
     if not username:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
         )
-    return TokenData(username=username)
+    return TokenData(username=username, id=id)
 
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
