@@ -41,7 +41,7 @@ export default function Index() {
     {
       clientId: microsoftConfig.CLIENT_ID,
       redirectUri: redirectUri,
-      scopes: ['openid', 'profile', 'email'],
+      scopes: ['openid', 'profile', 'email', 'Calendars.Read'],
       responseType: AuthSession.ResponseType.Code,
     },
     microsoftConfig.discovery
@@ -104,30 +104,22 @@ const fetchMicrosoftUserData = async (token) => {
     });
     const user = await response.json();
 
-    // Normalize the data to match your Google user format
-    const normalizedUser = {
-      id: user.id,
-      name: user.displayName,
-      email: user.userPrincipalName || user.mail,
-      picture: null, // Microsoft Graph requires a separate call for photos
-    };
-//  example of microsoft user data
-//     {
-//     "sub": "AAAAAAAAAAAAAAAAAAAAAFWuqdX8Bq2ISx9MQFUNbW8",
-//     "@odata.context": "https://substrate.office.com/profileB2/v2.0/me/$metadata#userinfo",
-//     "givenname": "sean",
-//     "familyname": "spencer",
-//     "email": "seanspencer32@outlook.com",
-//     "locale": "en-US",
-//     "picture": "https://graph.microsoft.com/v1.0/me/photo/$value"
-// }
-
-    setUserInfo(normalizedUser);
-    await AsyncStorage.setItem("user", JSON.stringify(normalizedUser));
+    console.log("Microsoft user data:", user);
+    // setUserInfo(normalizedUser);
+    // await AsyncStorage.setItem("user", JSON.stringify(normalizedUser));
+    await fetchCalendarMicrosoft(token);
   } catch (error) {
     console.error("Failed to fetch Microsoft user data:", error);
   }
 };
+
+async function fetchCalendarMicrosoft(token : string){
+      let res = await fetch("https://graph.microsoft.com/v1.0/me/calendar/events", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      let data = await res.json();
+      console.log("Microsoft calendar events:", data);
+}
 
 const exchangeCodeForToken = async (microsoftResponse) => {
       if(microsoftRequest == null || microsoftRequest.codeVerifier === undefined || microsoftRequest.codeVerifier === null ) {
