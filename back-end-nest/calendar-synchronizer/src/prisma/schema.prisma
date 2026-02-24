@@ -1,0 +1,62 @@
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../generated/prisma"
+  // importFileExtension = ""
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["calendar_synchronizer"]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model schedule_recurrences {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at          DateTime          @default(now()) @db.Timestamptz(6)
+  recurrence_interval BigInt            @default(1)
+  recurrence_period   recurrence_period @default(WEEK)
+  created_by          String            @db.Uuid
+  users               users             @relation(fields: [created_by], references: [id], onDelete: Cascade)
+  schedules           schedules[]
+
+  @@schema("calendar_synchronizer")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model schedules {
+  id                     String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event                  String?               @default("")
+  event_date             DateTime              @db.Date
+  start_time             DateTime              @default(dbgenerated("'00:00:00+07'::time with time zone")) @db.Timetz(6)
+  end_time               DateTime              @default(dbgenerated("'23:59:59+07'::time with time zone")) @db.Timetz(6)
+  created_at             DateTime              @default(now()) @db.Timestamp(6)
+  schedule_recurrence_id String?               @db.Uuid
+  created_by             String                @db.Uuid
+  users                  users                 @relation(fields: [created_by], references: [id], onDelete: Cascade)
+  schedule_recurrences   schedule_recurrences? @relation(fields: [schedule_recurrence_id], references: [id], onDelete: Cascade)
+
+  @@schema("calendar_synchronizer")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model users {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username             String?
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  password             String                 @default("password")
+  schedule_recurrences schedule_recurrences[]
+  schedules            schedules[]
+
+  @@schema("calendar_synchronizer")
+}
+
+/// This enum is commented in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+enum recurrence_period {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+
+  @@schema("calendar_synchronizer")
+}
