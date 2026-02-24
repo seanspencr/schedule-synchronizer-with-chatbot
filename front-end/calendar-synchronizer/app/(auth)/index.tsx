@@ -2,8 +2,13 @@ import { Text, View, TextInput, TouchableOpacity, Alert, Button } from "react-na
 import { useState, useEffect } from "react";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
+import * as AuthSession from 'expo-auth-session';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+<<<<<<< HEAD:front-end/calendar-synchronizer/app/(auth)/index.tsx
 import { useRouter } from "expo-router";
+=======
+import React from "react";
+>>>>>>> 83777a43f98892c66b936423db9fd0ef9c6d29b1:front-end/calendar-synchronizer/app/index.tsx
 
 export default function Index() {
   WebBrowser.maybeCompleteAuthSession();
@@ -22,6 +27,35 @@ export default function Index() {
   };
 
   const [request, response, promptAsync] = Google.useAuthRequest(config);
+
+  const microsoftConfig = {
+   CLIENT_ID: process.env.EXPO_PUBLIC_MICROSOFT_CLIENT_ID,
+   REDIRECT_URI: 'http://localhost:8081',
+  //  discovery: {
+  //    authorizationEndpoint: `https://login.microsoftonline.com/${process.env.EXPO_PUBLIC_MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize`,
+  //    tokenEndpoint: `https://login.microsoftonline.com/${process.env.EXPO_PUBLIC_MICROSOFT_TENANT_ID}/oauth2/v2.0/token`,
+  //  },
+
+  discovery: {
+     // Change the tenant ID variable to 'common'
+     authorizationEndpoint: `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`,
+     tokenEndpoint: `https://login.microsoftonline.com/common/oauth2/v2.0/token`,
+   }
+};
+
+  const redirectUri = AuthSession.makeRedirectUri();
+  console.log("Redirect URI:", redirectUri);
+  const [microsoftRequest, microsoftResponse, microsoftPromptAsync] = AuthSession.useAuthRequest(
+    {
+      clientId: microsoftConfig.CLIENT_ID,
+      redirectUri: redirectUri,
+      scopes: ['openid', 'profile', 'email', 'Calendars.Read'],
+      responseType: AuthSession.ResponseType.Code,
+    },
+    microsoftConfig.discovery
+  );
+
+  
 
   const getUserInfoWithGoogle = async (token) => {
     //absent token
@@ -118,6 +152,68 @@ export default function Index() {
 useEffect(() => {
   signInWithGoogle();
 }, [response]);
+
+const fetchMicrosoftUserData = async (token) => {
+  try {
+    const response = await fetch("https://graph.microsoft.com/oidc/userinfo", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const user = await response.json();
+
+    console.log("Microsoft user data:", user);
+    // setUserInfo(normalizedUser);
+    // await AsyncStorage.setItem("user", JSON.stringify(normalizedUser));
+    await fetchCalendarMicrosoft(token);
+  } catch (error) {
+    console.error("Failed to fetch Microsoft user data:", error);
+  }
+};
+
+async function fetchCalendarMicrosoft(token : string){
+      let res = await fetch("https://graph.microsoft.com/v1.0/me/calendar/events", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      let data = await res.json();
+      console.log("Microsoft calendar events:", data);
+}
+
+const exchangeCodeForToken = async (microsoftResponse) => {
+      if(microsoftRequest == null || microsoftRequest.codeVerifier === undefined || microsoftRequest.codeVerifier === null ) {
+        console.error("Code verifier is undefined. Cannot exchange code for token.");
+        return;
+      }
+  
+      try {
+        const { code } = microsoftResponse.params;
+        const response = await fetch(`https://login.microsoftonline.com/common/oauth2/v2.0/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: microsoftConfig.CLIENT_ID,
+            code: code,
+            redirect_uri: redirectUri, // Must match EXACTLY what was sent in the request
+            grant_type: 'authorization_code',
+            code_verifier: microsoftRequest.codeVerifier, // Include the code verifier for PKCE
+          }).toString(),
+        });
+
+        const data = await response.json();
+        
+        if (data.access_token) {
+          // Now that you have the token, go get the user data!
+          fetchMicrosoftUserData(data.access_token);
+        }
+      } catch (error) {
+        console.error("Token exchange failed:", error);
+      }
+    };
+
+useEffect(() => {
+  console.log("Microsoft response:", microsoftResponse);
+  if (microsoftResponse && microsoftResponse.type === 'success') {
+    exchangeCodeForToken(microsoftResponse);
+  }
+}, [microsoftResponse]);
 
 
 //log the userInfo to see user details
@@ -231,8 +327,13 @@ console.log("userInfo:", JSON.stringify(userInfo))
       </TouchableOpacity>
 
       <Button title= "sign in with google" onPress={()=>{promptAsync()}}/>
+<<<<<<< HEAD:front-end/calendar-synchronizer/app/(auth)/index.tsx
       <Button onPress={() => router.push("/(auth)/loginScreen")} title="Navigate to login screen" />
       <Button onPress={() => router.push("/(main)/dashboard")} title="Navigate to main screen" />
+=======
+      <Button title= "sign in with microsoft" onPress={()=>{microsoftPromptAsync()}}/>
+
+>>>>>>> 83777a43f98892c66b936423db9fd0ef9c6d29b1:front-end/calendar-synchronizer/app/index.tsx
 
     </View>
   );

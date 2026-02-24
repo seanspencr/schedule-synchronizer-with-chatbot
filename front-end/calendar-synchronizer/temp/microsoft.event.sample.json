@@ -1,0 +1,76 @@
+ {
+            "@odata.etag": "W/\"8crEExqy0EudfjlRwN3IxwACkrVwUQ==\"",
+            "id": "AQMkADAwATM3ZmYAZS01MGY5LWQ1ZDAtMDACLTAwCgBGAAADXF4KPfzCaUG0HGX5jsTqcgcA8crEExqy0EudfjlRwN3IxwAAAgENAAAA8crEExqy0EudfjlRwN3IxwACkp_r7gAAAA==",
+            "createdDateTime": "2025-04-05T07:41:09.202047Z",
+            "lastModifiedDateTime": "2025-04-05T07:41:09.3011646Z",
+            "changeKey": "8crEExqy0EudfjlRwN3IxwACkrVwUQ==",
+            "categories": [],
+            "transactionId": "localevent:0659db8d-4a3e-1d14-d6eb-23af1f8e7f25",
+            "originalStartTimeZone": "SE Asia Standard Time",
+            "originalEndTimeZone": "SE Asia Standard Time",
+            "iCalUId": "040000008200E00074C5B7101A82E00800000000D619AF18FEA5DB010000000000000000100000002452A7CDD409484A9BB7A0F5D1F8122C",
+            "uid": "040000008200E00074C5B7101A82E00800000000D619AF18FEA5DB010000000000000000100000002452A7CDD409484A9BB7A0F5D1F8122C",
+            "reminderMinutesBeforeStart": 15,
+            "isReminderOn": true,
+            "hasAttachments": false,
+            "subject": "Proctor UTS",
+            "bodyPreview": "",
+            "importance": "normal",
+            "sensitivity": "normal",
+            "isAllDay": false,
+            "isCancelled": false,
+            "isOrganizer": true,
+            "responseRequested": true,
+            "seriesMasterId": null,
+            "showAs": "busy",
+            "type": "singleInstance",
+            "webLink": "https://outlook.live.com/owa/?itemid=AQMkADAwATM3ZmYAZS01MGY5LWQ1ZDAtMDACLTAwCgBGAAADXF4KPfzCaUG0HGX5jsTqcgcA8crEExqy0EudfjlRwN3IxwAAAgENAAAA8crEExqy0EudfjlRwN3IxwACkp%2Br7gAAAA%3D%3D&exvsurl=1&path=/calendar/item",
+            "onlineMeetingUrl": null,
+            "isOnlineMeeting": false,
+            "onlineMeetingProvider": "unknown",
+            "allowNewTimeProposals": true,
+            "occurrenceId": null,
+            "isDraft": false,
+            "hideAttendees": false,
+            "responseStatus": {
+                "response": "organizer",
+                "time": "0001-01-01T00:00:00Z"
+            },
+            "body": {
+                "contentType": "html",
+                "content": ""
+            },
+            "start": {
+                "dateTime": "2025-04-09T01:00:00.0000000",
+                "timeZone": "UTC"
+            },
+            "end": {
+                "dateTime": "2025-04-09T03:00:00.0000000",
+                "timeZone": "UTC"
+            },
+            "location": {
+                "displayName": "625",
+                "locationType": "default",
+                "uniqueId": "625",
+                "uniqueIdType": "private"
+            },
+            "locations": [
+                {
+                    "displayName": "625",
+                    "locationType": "default",
+                    "uniqueId": "625",
+                    "uniqueIdType": "private"
+                }
+            ],
+            "recurrence": null,
+            "attendees": [],
+            "organizer": {
+                "emailAddress": {
+                    "name": "sean spencer",
+                    "address": "seanspencer32@outlook.com"
+                }
+            },
+            "onlineMeeting": null,
+            "calendar@odata.associationLink": "https://graph.microsoft.com/v1.0/users('seanspencer32@outlook.com')/calendars('AQMkADAwATM3ZmYAZS01MGY5LWQ1ZDAtMDACLTAwCgBGAAADXF4KPfzCaUG0HGX5jsTqcgcA8crEExqy0EudfjlRwN3IxwAAAgEGAAAA8crEExqy0EudfjlRwN3IxwAAAqPgAAAA')/$ref",
+            "calendar@odata.navigationLink": "https://graph.microsoft.com/v1.0/users('seanspencer32@outlook.com')/calendars('AQMkADAwATM3ZmYAZS01MGY5LWQ1ZDAtMDACLTAwCgBGAAADXF4KPfzCaUG0HGX5jsTqcgcA8crEExqy0EudfjlRwN3IxwAAAgEGAAAA8crEExqy0EudfjlRwN3IxwAAAqPgAAAA')"
+        }
