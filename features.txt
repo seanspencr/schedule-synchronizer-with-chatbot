@@ -1,0 +1,31 @@
+pages :
+- Dashboard (today's event, today's task)
+
+fitur :
+- authentication & authorization
+	- login (with OAuth, with creds)
+	- register (Oauth, creds)
+	- access tokens
+	- role base access (user free & user premium)
+- CRUD schedule manual (schedule adalah event yang punya timespan)
+	create schedule
+	read schedule (di dashboard & calendar view)
+	edit schedule
+	delete schedule
+	recurring schedule
+- CRUD task manual (task adalah kerjaan yang tidak punya timespan)
+	create task
+	read task (all task)
+	checklist task
+	edit task
+	delete task
+- Create schedule melalui chat (model sendiri)
+- Read schedule melalui chat (LLM)
+- CRUD task melalui chat (LLM)
+- Fetch schedule dari google calendar
+- Fetch schedule dari outlook
+- Fetch schedule dari api apapun (optional)
+
+
+- Timeblocking suggestion (LLM) (Tolong rekomendasi buatkan todo list dan timeblocking dari task yang saya miliki sekarang)
+- Statistics (minggu ini berapa task yang diselesaikan)

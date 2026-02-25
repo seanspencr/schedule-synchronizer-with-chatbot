@@ -1,0 +1,9 @@
+ {
+    "sub": "AAAAAAAAAAAAAAAAAAAAAFWuqdX8Bq2ISx9MQFUNbW8",
+    "@odata.context": "https://substrate.office.com/profileB2/v2.0/me/$metadata#userinfo",
+    "givenname": "sean",
+    "familyname": "spencer",
+    "email": "seanspencer32@outlook.com",
+    "locale": "en-US",
+    "picture": "https://graph.microsoft.com/v1.0/me/photo/$value"
+}
