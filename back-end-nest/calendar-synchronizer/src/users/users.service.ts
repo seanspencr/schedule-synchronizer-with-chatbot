@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {DatabaseService} from "../database/database.service";
@@ -17,6 +17,33 @@ export class UsersService {
       throw new Error("Password is required");
     }
     createUserDto.password = hashed_password;
+
+    const existingUser = await this.dbService.users.findFirst({
+      where: {
+        username: createUserDto.email,
+      },
+    });
+
+    if (existingUser) {
+      throw new UnprocessableEntityException("Email already registered, please login instead");
+    }
+    return this.dbService.users.create({data : createUserDto});
+  }
+
+  async createOauthUser(createUserDto: CreateUserDto) {
+    const password = "null";
+    createUserDto.password = password;
+
+    const existingUser = await this.dbService.users.findFirst({
+      where: {
+        username: createUserDto.email,
+      },
+    });
+
+    if (existingUser) {
+      throw new UnprocessableEntityException("Email already registered, please login instead");
+    }
+    
     return this.dbService.users.create({data : createUserDto});
   }
 

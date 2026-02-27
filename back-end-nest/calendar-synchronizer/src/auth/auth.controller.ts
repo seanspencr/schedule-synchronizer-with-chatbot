@@ -42,4 +42,20 @@ export class AuthController {
         return res.send(user);
     }        
 
+    @Post("/register/google")
+    async registerGoogleUser(@Body() body: {authCode: string, codeVerifier: string, redirectUri: string}){
+        const googleAuthCode = body.authCode;
+        const codeVerifier = body.codeVerifier;
+        const redirectUri = body.redirectUri;
+        if(!googleAuthCode || !codeVerifier || !redirectUri){
+            throw new HttpException("auth_code, code_verifier, and redirect_uri are required", 400);
+        }
+        return this.authService.registerGoogleUser(googleAuthCode, codeVerifier, redirectUri);
+    }
+
+    @Get("register/google/callback")
+    async googleAuthCallback(@Req() req, @Res() res){
+        console.log("Google auth callback hit with query:", req.query);
+    }
+
 }
