@@ -1,14 +1,13 @@
 import { Text, View, TextInput, TouchableOpacity, Alert, Button } from "react-native";
 import { useState, useEffect } from "react";
 import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
-import * as AuthSession from 'expo-auth-session';
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
-<<<<<<< HEAD:front-end/calendar-synchronizer/app/(auth)/index.tsx
 import { useRouter } from "expo-router";
-=======
 import React from "react";
->>>>>>> 83777a43f98892c66b936423db9fd0ef9c6d29b1:front-end/calendar-synchronizer/app/index.tsx
+import { useGoogleAuthCode } from "../hooks/useGoogleAuthCode";
+import { useMicrosoftLogin } from "../hooks/useMicrosoftLogin";
+import { useGoogleCodeLogin } from "../hooks/useGoogleCodeLogin";
 
 export default function Index() {
   WebBrowser.maybeCompleteAuthSession();
@@ -16,46 +15,11 @@ export default function Index() {
   const router = useRouter();
 
   const [userInfo, setUserInfo] = useState(null);
-  const [calendarEvents, setCalendarEvents] = useState([]);
+  // const [calendarEvents, setCalendarEvents] = useState([]);
 
-  //client IDs from .env
-  const config = {
-    androidClientId: process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_IOS_CLIENT_ID,
-    webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
-    scopes: ['https://www.googleapis.com/auth/calendar.readonly']
-  };
 
-  const [request, response, promptAsync] = Google.useAuthRequest(config);
-
-  const microsoftConfig = {
-   CLIENT_ID: process.env.EXPO_PUBLIC_MICROSOFT_CLIENT_ID,
-   REDIRECT_URI: 'http://localhost:8081',
-  //  discovery: {
-  //    authorizationEndpoint: `https://login.microsoftonline.com/${process.env.EXPO_PUBLIC_MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize`,
-  //    tokenEndpoint: `https://login.microsoftonline.com/${process.env.EXPO_PUBLIC_MICROSOFT_TENANT_ID}/oauth2/v2.0/token`,
-  //  },
-
-  discovery: {
-     // Change the tenant ID variable to 'common'
-     authorizationEndpoint: `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`,
-     tokenEndpoint: `https://login.microsoftonline.com/common/oauth2/v2.0/token`,
-   }
-};
-
-  const redirectUri = AuthSession.makeRedirectUri();
-  console.log("Redirect URI:", redirectUri);
-  const [microsoftRequest, microsoftResponse, microsoftPromptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: microsoftConfig.CLIENT_ID,
-      redirectUri: redirectUri,
-      scopes: ['openid', 'profile', 'email', 'Calendars.Read'],
-      responseType: AuthSession.ResponseType.Code,
-    },
-    microsoftConfig.discovery
-  );
-
-  
+  const [gooogleRequest, googleResponse, googlePromptAsync] = useGoogleAuthCode();
+  const [microsoftRequest, microsoftResponse, microsoftPromptAsync] = useMicrosoftLogin()
 
   const getUserInfoWithGoogle = async (token) => {
     //absent token
@@ -75,8 +39,8 @@ export default function Index() {
     } catch (error) {
       console.error(
         "Failed to fetch user data:",
-        response.status,
-        response.statusText
+        googleResponse.status,
+        googleResponse.statusText
       );
     }
   };
@@ -135,13 +99,13 @@ export default function Index() {
     if (userJSON) {
       // If user information is found in AsyncStorage, parse it and set it in the state
       setUserInfo(JSON.parse(userJSON));
-    } else if (response?.type === "success") {
+    } else if (googleResponse?.type === "success") {
       // If no user information is found and the response type is "success" (assuming response is defined),
       // call getUserInfo with the access token from the response
-      getUserInfoWithGoogle(response.authentication.accessToken);
+      getUserInfoWithGoogle(googleResponse.authentication.accessToken);
     }
 
-    getCalendarEvents(response.authentication.accessToken);
+    getCalendarEvents(googleResponse.authentication.accessToken);
   } catch (error) {
     // Handle any errors that occur during AsyncStorage retrieval or other operations
     console.error("Error retrieving user data from AsyncStorage:", error);
@@ -149,9 +113,7 @@ export default function Index() {
 };
 
 //add it to a useEffect with response as a dependency 
-useEffect(() => {
-  signInWithGoogle();
-}, [response]);
+
 
 const fetchMicrosoftUserData = async (token) => {
   try {
@@ -215,13 +177,22 @@ useEffect(() => {
   }
 }, [microsoftResponse]);
 
+useEffect(() => {
+  if(googleResponse == null || googleResponse == undefined) return;
+  if(gooogleRequest == null || gooogleRequest == undefined) return;
+  // signInWithGoogle();
+  console.log(googleResponse)
+  const code = googleResponse?.params?.code;
+  const codeVerifier = gooogleRequest.codeVerifier;
+  const redirectUri = gooogleRequest.redirectUri;
+  useGoogleCodeLogin(code, codeVerifier, redirectUri);
+}, [gooogleRequest, googleResponse]);
 
 //log the userInfo to see user details
 console.log("userInfo:", JSON.stringify(userInfo))
 
 
-  const API_URL = "http://10.0.2.2:8000"; // Replace 3000 with your backend port
-  
+  const API_URL = `${process.env.EXPO_PUBLIC_BACKEND_URL}:${process.env.EXPO_PUBLIC_BACKEND_PORT}`;   
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -260,25 +231,25 @@ console.log("userInfo:", JSON.stringify(userInfo))
         )
       }
 
-      {
+      {/* {
         calendarEvents.length > 0 && (
           <View style={{ marginTop: 20 }}>
             <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
               Calendar Events:
             </Text>
-            {calendarEvents.map((event) => (
-              <View key={event.id} style={{ marginBottom: 10 }}>
-                <Text>{JSON.stringify(event)}</Text>
-                <Text style={{ fontSize: 16 }}>{event.summary}</Text>
-                <Text style={{ color: "#666" }}>
-                  {new Date(event.start.dateTime).toLocaleString()} -{" "}
-                  {new Date(event.end.dateTime).toLocaleString()}
-                </Text>
-              </View>
-            ))}
           </View>
+            // {calendarEvents.map((event) => (
+              // <View key={event.id} style={{ marginBottom: 10 }}>
+              //   <Text>{JSON.stringify(event)}</Text>
+              //   <Text style={{ fontSize: 16 }}>{event.summary}</Text>
+              //   <Text style={{ color: "#666" }}>
+              //     {new Date(event.start.dateTime).toLocaleString()} -{" "}
+              //     {new Date(event.end.dateTime).toLocaleString()}
+              //   </Text>
+              // </View>
+            // ))}
         )
-      }
+      } */}
 
       <TextInput
         style={{
@@ -326,14 +297,10 @@ console.log("userInfo:", JSON.stringify(userInfo))
         </Text>
       </TouchableOpacity>
 
-      <Button title= "sign in with google" onPress={()=>{promptAsync()}}/>
-<<<<<<< HEAD:front-end/calendar-synchronizer/app/(auth)/index.tsx
+      <Button title= "register with google (rial)" onPress={()=>{googlePromptAsync()}}/>
       <Button onPress={() => router.push("/(auth)/loginScreen")} title="Navigate to login screen" />
       <Button onPress={() => router.push("/(main)/dashboard")} title="Navigate to main screen" />
-=======
       <Button title= "sign in with microsoft" onPress={()=>{microsoftPromptAsync()}}/>
-
->>>>>>> 83777a43f98892c66b936423db9fd0ef9c6d29b1:front-end/calendar-synchronizer/app/index.tsx
 
     </View>
   );
